@@ -1,440 +1,112 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Civil War Quiz</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Todo Local</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <div class="ambient ambient-a"></div>
+      <div class="ambient ambient-b"></div>
 
-    :root {
-      --bg: #1a1208;
-      --surface: #221a0e;
-      --border: #3d2f1a;
-      --parchment: #e8d5a3;
-      --gold: #c9952a;
-      --gold2: #f0c44a;
-      --red: #8b2020;
-      --blue: #1a3a6b;
-      --text: #e8d5a3;
-      --muted: #7a6542;
-      --correct: #4a8c4a;
-      --wrong: #8b2020;
-    }
+      <main class="app">
+        <section class="hero card">
+          <div>
+            <p class="eyebrow">Smooth motion • Local-first • AI-assisted</p>
+            <h1>Smart Todo Local</h1>
+            <p class="hero-copy">
+              Capture tasks, add extra details, turn rough notes into action items,
+              and chat with an AI helper in one space.
+            </p>
+          </div>
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Courier Prime', monospace;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem 1rem 3rem;
-      background-image:
-        radial-gradient(ellipse at 10% 10%, #2a1a0a 0%, transparent 50%),
-        radial-gradient(ellipse at 90% 90%, #0a1020 0%, transparent 50%),
-        repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(201,149,42,0.03) 40px, rgba(201,149,42,0.03) 41px),
-        repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(201,149,42,0.03) 40px, rgba(201,149,42,0.03) 41px);
-    }
-    header {
-      text-align: center;
-      margin-bottom: 1.25rem;
-      width: 100%;
-    }
-    .header-rule {
-      width: 100%;
-      max-width: 600px;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--gold), transparent);
-      margin: 0.6rem auto;
-    }
-    header h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(1.8rem, 5vw, 2.8rem);
-      font-weight: 900;
-      color: var(--gold2);
-      letter-spacing: 0.04em;
-      text-shadow: 0 2px 12px rgba(201,149,42,0.3);
-    }
-    header p {
-      color: var(--muted);
-      font-size: 0.8rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin-top: 0.2rem;
-    }
-    .stars {
-      color: var(--gold);
-      font-size: 1rem;
-      letter-spacing: 0.3em;
-    }
-    .settings-card,
-    .quiz-card {
-      width: 100%;
-      max-width: 680px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(201,149,42,0.1);
-    }
-    .settings-card {
-      padding: 1rem 1.1rem;
-      margin-bottom: 1rem;
-    }
-    .mode-row {
-      margin-top: 0.85rem;
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-    .mode-btn {
-      background: transparent;
-      color: var(--gold);
-      border: 1px solid var(--gold);
-      padding: 0.55rem 0.9rem;
-      border-radius: 2px;
-    }
-    .mode-btn.active {
-      background: var(--gold);
-      color: #1a1208;
-    }
-    .settings-title {
-      font-family: 'Playfair Display', serif;
-      color: var(--gold2);
-      font-size: 1rem;
-      margin-bottom: 0.35rem;
-    }
-    .settings-copy {
-      color: var(--muted);
-      font-size: 0.8rem;
-      line-height: 1.5;
-    }
-    .quiz-card {
-      padding: 2rem;
-      position: relative;
-    }
-    .quiz-card::before,
-    .quiz-card::after {
-      content: '✦';
-      position: absolute;
-      top: 12px;
-      color: var(--gold);
-      font-size: 0.7rem;
-      opacity: 0.5;
-    }
-    .quiz-card::before { left: 12px; }
-    .quiz-card::after { right: 12px; }
-    .top-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border);
-      gap: 1rem;
-    }
-    .progress-wrap {
-      flex: 1;
-      margin-right: 1rem;
-    }
-    .progress-track {
-      height: 5px;
-      background: var(--border);
-      overflow: hidden;
-      margin-bottom: 0.4rem;
-    }
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--gold), var(--gold2));
-      transition: width 0.35s ease;
-    }
-    .progress-label {
-      font-size: 0.7rem;
-      color: var(--muted);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    .score-badge {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.1rem;
-      color: var(--gold2);
-      white-space: nowrap;
-      font-weight: 700;
-    }
-    .category-tag {
-      display: inline-block;
-      font-size: 0.65rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--gold);
-      border: 1px solid rgba(201,149,42,0.3);
-      padding: 0.2rem 0.6rem;
-      border-radius: 2px;
-      margin-bottom: 0.8rem;
-    }
-    .question-num {
-      font-size: 0.7rem;
-      color: var(--muted);
-      margin-bottom: 0.4rem;
-      letter-spacing: 0.06em;
-    }
-    .question-text {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(1rem, 2.5vw, 1.18rem);
-      font-weight: 700;
-      line-height: 1.5;
-      color: var(--parchment);
-      margin-bottom: 1.5rem;
-    }
-    .input-row {
-      display: flex;
-      gap: 0.6rem;
-      margin-bottom: 1rem;
-    }
-    textarea {
-      flex: 1;
-      background: rgba(0,0,0,0.4);
-      border: 1px solid var(--border);
-      border-radius: 2px;
-      padding: 0.75rem 1rem;
-      color: var(--parchment);
-      font-family: 'Courier Prime', monospace;
-      font-size: 0.9rem;
-      outline: none;
-      resize: vertical;
-      min-height: 88px;
-      line-height: 1.5;
-    }
-    textarea:focus { border-color: var(--gold); }
-    textarea:disabled { opacity: 0.55; }
-    button {
-      font-family: 'Courier Prime', monospace;
-      font-weight: 700;
-      font-size: 0.85rem;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s;
-      letter-spacing: 0.05em;
-    }
-    .btn-submit,
-    .btn-restart {
-      background: var(--gold);
-      color: #1a1208;
-      border-radius: 2px;
-    }
-    .btn-submit {
-      padding: 0 1.2rem;
-      align-self: flex-end;
-      height: 44px;
-      white-space: nowrap;
-    }
-    .btn-submit:hover:not(:disabled),
-    .btn-restart:hover {
-      background: var(--gold2);
-      transform: translateY(-1px);
-    }
-    .btn-submit:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-    .feedback-box {
-      border-radius: 2px;
-      padding: 1rem 1.2rem;
-      font-size: 0.88rem;
-      line-height: 1.6;
-      display: none;
-      margin-bottom: 1rem;
-      border-left: 3px solid;
-    }
-    .feedback-box.correct {
-      background: rgba(74,140,74,0.1);
-      border-color: var(--correct);
-      color: #8fd48f;
-    }
-    .feedback-box.wrong {
-      background: rgba(139,32,32,0.1);
-      border-color: var(--wrong);
-      color: #e08080;
-    }
-    #gradingBox {
-      background: rgba(26,58,107,0.12);
-      border-color: var(--blue);
-      color: var(--parchment);
-    }
-    .grading-title {
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--gold);
-      margin-bottom: 0.55rem;
-    }
-    .grading-line + .grading-line {
-      margin-top: 0.45rem;
-    }
-    .grading-note {
-      margin-top: 0.65rem;
-      font-size: 0.76rem;
-      color: var(--muted);
-    }
-    .answer-reveal {
-      margin-top: 0.6rem;
-      color: var(--parchment);
-      opacity: 0.92;
-      font-style: italic;
-    }
-    .btn-next {
-      background: transparent;
-      color: var(--gold);
-      border: 1px solid var(--gold);
-      width: 100%;
-      padding: 0.75rem;
-      border-radius: 2px;
-      display: none;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      font-size: 0.8rem;
-    }
-    .btn-next:hover {
-      background: rgba(201,149,42,0.1);
-    }
-    .score-screen {
-      display: none;
-      text-align: center;
-      padding: 1rem 0;
-    }
-    .score-cannon {
-      font-size: 3rem;
-      margin-bottom: 0.5rem;
-    }
-    .score-number {
-      font-family: 'Playfair Display', serif;
-      font-size: 4rem;
-      font-weight: 900;
-      color: var(--gold2);
-      text-shadow: 0 0 30px rgba(201,149,42,0.4);
-    }
-    .score-denom {
-      font-size: 1.5rem;
-      color: var(--muted);
-    }
-    .score-sub {
-      font-size: 0.8rem;
-      color: var(--muted);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin-bottom: 1rem;
-    }
-    .score-msg {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.15rem;
-      color: var(--parchment);
-      font-style: italic;
-      margin-bottom: 1.5rem;
-      line-height: 1.5;
-    }
-    .btn-restart {
-      padding: 0.85rem 2.5rem;
-      font-size: 0.9rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    .kbd-hint {
-      text-align: right;
-      font-size: 0.68rem;
-      color: var(--muted);
-      margin-top: 0.4rem;
-    }
-    .loading-dots {
-      display: inline-flex;
-      gap: 3px;
-      align-items: center;
-      margin-left: 4px;
-      vertical-align: middle;
-    }
-    .loading-dots span {
-      width: 4px;
-      height: 4px;
-      background: currentColor;
-      border-radius: 50%;
-      animation: dot-bounce 1.2s infinite;
-    }
-    .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-    .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes dot-bounce {
-      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-      40% { transform: translateY(-4px); opacity: 1; }
-    }
-    @media (max-width: 700px) {
-      .quiz-card { padding: 1.2rem; }
-      .input-row, .top-bar { flex-direction: column; align-items: stretch; }
-      .progress-wrap { margin-right: 0; }
-      .btn-submit { width: 100%; height: 46px; }
-      .score-badge { text-align: center; }
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <div class="stars">★ ★ ★</div>
-    <div class="header-rule"></div>
-    <h1>Civil War Quiz</h1>
-    <p>Chapter 21 · Emancipation Proclamation · Key Figures</p>
-    <div class="header-rule"></div>
-  </header>
+          <div class="auth-panel">
+            <div class="auth-meta">
+              <span class="status-dot" id="cloud-dot"></span>
+              <span>Fully local todo storage</span>
+            </div>
+            <p class="auth-help">
+              Todos are saved in this browser. AI planner and chat call Cerebras directly with `llama3.1-8b`.
+            </p>
+          </div>
+        </section>
 
-  <section class="settings-card">
-    <div class="settings-title">Grading Setup</div>
-    <div class="settings-copy">
-      Choose whether answers should be graded locally or with Cerebras.
-    </div>
-    <div class="mode-row">
-      <button id="localModeBtn" class="mode-btn active" type="button">Local Mode</button>
-      <button id="cerebrasModeBtn" class="mode-btn" type="button">AI Grading</button>
-    </div>
-  </section>
+        <section class="grid">
+          <section class="card todo-panel">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Todo Board</p>
+                <h2>Your tasks stay saved</h2>
+              </div>
+              <div class="counter-pill" id="todo-count">0 tasks</div>
+            </div>
 
-  <div class="quiz-card" id="quizCard">
-    <div class="top-bar">
-      <div class="progress-wrap">
-        <div class="progress-track">
-          <div class="progress-fill" id="progressFill" style="width:0%"></div>
-        </div>
-        <div class="progress-label" id="progressLabel">Question 1 of 40</div>
-      </div>
-      <div class="score-badge">⚔ <span id="scoreLive">0</span> correct</div>
+            <form id="todo-form" class="todo-form">
+              <input id="todo-title" type="text" maxlength="120" placeholder="Add a new task" required />
+              <button type="button" id="toggle-extra" class="ghost-button">Add extra information</button>
+              <textarea
+                id="todo-extra"
+                class="collapsible hidden"
+                maxlength="500"
+                placeholder="Extra information, notes, links, or reminders"
+              ></textarea>
+              <button type="submit" class="primary-button">Save task</button>
+            </form>
+
+            <div id="todo-list" class="todo-list" aria-live="polite"></div>
+          </section>
+
+          <section class="card planner-panel">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">AI Planner</p>
+                <h2>Turn messy text into a task list</h2>
+              </div>
+            </div>
+
+            <textarea
+              id="planner-input"
+              class="planner-input"
+              placeholder="Paste a paragraph and I’ll summarize it into actionable todos."
+            ></textarea>
+            <button id="planner-submit" class="primary-button">Summarize into tasks</button>
+            <div id="planner-status" class="mini-status"></div>
+            <div id="planner-drafts" class="planner-drafts"></div>
+            <button id="planner-add-all" class="ghost-button hidden" type="button">Add all AI tasks to todo list</button>
+          </section>
+        </section>
+
+        <section class="card chat-panel">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Helper Chat</p>
+              <h2>Ask it to summarize, brainstorm, or just say hi</h2>
+            </div>
+          </div>
+
+          <div id="chat-log" class="chat-log"></div>
+
+          <form id="chat-form" class="chat-form">
+            <textarea
+              id="chat-input"
+              class="chat-input"
+              placeholder="Type a message or paste a paragraph to summarize"
+              required
+            ></textarea>
+            <button type="submit" class="primary-button">Send</button>
+          </form>
+        </section>
+      </main>
     </div>
 
-    <div id="mainQuiz">
-      <div class="category-tag" id="categoryTag">Loading...</div>
-      <div class="question-num" id="qNum">Question 1</div>
-      <div class="question-text" id="questionText">Loading your first question...</div>
-
-      <div class="input-row">
-        <textarea id="answerInput" placeholder="Write your answer here... (Shift+Enter for new line, Enter to submit)"></textarea>
-        <button class="btn-submit" id="submitBtn" type="button">Check →</button>
-      </div>
-
-      <div class="kbd-hint">Press Enter to submit · Shift+Enter for new line</div>
-
-      <div class="feedback-box" id="feedbackBox"></div>
-      <div class="feedback-box" id="gradingBox"></div>
-      <button class="btn-next" id="nextBtn" type="button">Next Question →</button>
-    </div>
-
-    <div class="score-screen" id="scoreScreen">
-      <div class="score-cannon">🏳️</div>
-      <div>
-        <span class="score-number" id="scoreFinal">0</span>
-        <span class="score-denom" id="scoreDenom">/40</span>
-      </div>
-      <div class="score-sub">correct answers</div>
-      <div class="score-msg" id="scoreMsg"></div>
-      <button class="btn-restart" id="restartBtn" type="button">↺ Fight Again</button>
-    </div>
-  </div>
-
-  <script src="civil-war-quiz.js"></script>
-</body>
+    <script type="module" src="./app.js"></script>
+  </body>
 </html>
