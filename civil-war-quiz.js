@@ -48,6 +48,7 @@ let current = 0;
 let score = 0;
 let answered = false;
 let gradingMode = "local";
+let lastAiContext = null;
 
 const el = {
   localModeBtn: document.getElementById("localModeBtn"),
@@ -60,6 +61,10 @@ const el = {
   nextBtn: document.getElementById("nextBtn"),
   feedbackBox: document.getElementById("feedbackBox"),
   gradingBox: document.getElementById("gradingBox"),
+  followUpBox: document.getElementById("followUpBox"),
+  followUpInput: document.getElementById("followUpInput"),
+  followUpBtn: document.getElementById("followUpBtn"),
+  followUpResponse: document.getElementById("followUpResponse"),
   progressFill: document.getElementById("progressFill"),
   progressLabel: document.getElementById("progressLabel"),
   scoreLive: document.getElementById("scoreLive"),
@@ -195,32 +200,22 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-async function gradeWithCerebras(question, userAnswer) {
+async function fetchCerebras(messages, { temperature = 0.2, responseFormat } = {}) {
+  const body = {
+    model: CEREBRAS_MODEL,
+    temperature,
+    messages
+  };
+
+  if (responseFormat) body.response_format = responseFormat;
+
   const response = await fetch(CEREBRAS_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${CEREBRAS_API_KEY}`
     },
-    body: JSON.stringify({
-      model: CEREBRAS_MODEL,
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content: "You are a friendly middle school social studies teacher grading a Civil War quiz. Be generous with synonyms, paraphrasing, and minor spelling mistakes. Return only a JSON object with keys correct, feedback, and key_points."
-        },
-        {
-          role: "user",
-          content:
-            `Question: ${question.q}\n` +
-            `Ideal answer: ${question.a}\n` +
-            `Student answer: ${userAnswer}\n\n` +
-            'Return JSON only in this exact shape: {"correct":true,"feedback":"...","key_points":"..."}'
-        }
-      ]
-    })
+    body: JSON.stringify(body)
   });
 
   const raw = await response.text();
@@ -240,6 +235,28 @@ async function gradeWithCerebras(question, userAnswer) {
     throw new Error("Cerebras returned no message content.");
   }
 
+  return String(content);
+}
+
+async function gradeWithCerebras(question, userAnswer) {
+  const content = await fetchCerebras(
+    [
+      {
+        role: "system",
+        content: "You are a friendly middle school social studies teacher grading a Civil War quiz. Be generous with synonyms, paraphrasing, and minor spelling mistakes. Return only a JSON object with keys correct, feedback, and key_points."
+      },
+      {
+        role: "user",
+        content:
+          `Question: ${question.q}\n` +
+          `Ideal answer: ${question.a}\n` +
+          `Student answer: ${userAnswer}\n\n` +
+          'Return JSON only in this exact shape: {"correct":true,"feedback":"...","key_points":"..."}'
+      }
+    ],
+    { responseFormat: { type: "json_object" } }
+  );
+
   let parsed;
   try {
     parsed = JSON.parse(content);
@@ -254,6 +271,56 @@ async function gradeWithCerebras(question, userAnswer) {
     feedback: parsed.feedback || "Cerebras grading completed.",
     key_points: parsed.key_points || question.a
   };
+}
+
+function resetFollowUpUi() {
+  lastAiContext = null;
+  el.followUpBox.style.display = "none";
+  el.followUpInput.value = "";
+  el.followUpInput.disabled = false;
+  el.followUpBtn.disabled = false;
+  el.followUpResponse.innerHTML = "";
+}
+
+function renderFollowUpResponse(text) {
+  el.followUpResponse.innerHTML = `<strong>AI Follow-Up:</strong> ${escapeHtml(text).replace(/\n/g, "<br>")}`;
+}
+
+async function askFollowUp() {
+  const followUpQuestion = el.followUpInput.value.trim();
+  if (!lastAiContext || !followUpQuestion) return;
+
+  el.followUpInput.disabled = true;
+  el.followUpBtn.disabled = true;
+  el.followUpResponse.innerHTML = 'Thinking<span class="loading-dots"><span></span><span></span><span></span></span>';
+
+  try {
+    const reply = await fetchCerebras([
+      {
+        role: "system",
+        content: "You are a friendly middle school social studies teacher helping a student improve a Civil War quiz answer. Use the grading context below, answer the follow-up directly, and keep it encouraging and easy to understand."
+      },
+      {
+        role: "user",
+        content:
+          `Question: ${lastAiContext.question}\n` +
+          `Ideal answer: ${lastAiContext.idealAnswer}\n` +
+          `Student answer: ${lastAiContext.studentAnswer}\n` +
+          `AI grading result: ${lastAiContext.correct ? "Correct" : "Incorrect"}\n` +
+          `AI feedback: ${lastAiContext.feedback}\n` +
+          `AI key points: ${lastAiContext.keyPoints}\n\n` +
+          `Follow-up question: ${followUpQuestion}`
+      }
+    ], { temperature: 0.4 });
+
+    renderFollowUpResponse(reply);
+  } catch (error) {
+    el.followUpResponse.innerHTML = `<span style="color:#e08080">${escapeHtml(error.message)}</span>`;
+  } finally {
+    el.followUpInput.disabled = false;
+    el.followUpBtn.disabled = false;
+    el.followUpInput.focus();
+  }
 }
 
 function applyScoreForCurrent(correct) {
@@ -313,6 +380,7 @@ function loadQuestion() {
   el.feedbackBox.style.display = "none";
   el.gradingBox.style.display = "none";
   el.gradingBox.innerHTML = "";
+  resetFollowUpUi();
   el.nextBtn.style.display = "none";
   updateProgress();
   el.answerInput.focus();
@@ -341,6 +409,7 @@ async function submitAnswer() {
     renderFeedback(localResult);
     renderGrading(`<div class="grading-line"><strong>Local:</strong> ${localResult.correct ? "Correct" : "Incorrect"} - ${escapeHtml(localResult.feedback)}</div><div class="grading-line"><strong>Key points:</strong> ${escapeHtml(localResult.key_points)}</div><div class="grading-note">Score uses local grading in this mode.</div>`);
   } else {
+    resetFollowUpUi();
     el.feedbackBox.style.display = "block";
     el.feedbackBox.className = "feedback-box";
     el.feedbackBox.innerHTML = 'Checking your answer<span class="loading-dots"><span></span><span></span><span></span></span>';
@@ -353,6 +422,15 @@ async function submitAnswer() {
       renderGrading(
         `<div class="grading-line"><strong>AI Grading:</strong> ${apiResult.correct ? "Correct" : "Incorrect"} - ${escapeHtml(apiResult.feedback)}</div><div class="grading-line"><strong>AI key points:</strong> ${escapeHtml(apiResult.key_points)}</div><div class="grading-note">Score uses the AI result in this mode.</div>`
       );
+      lastAiContext = {
+        question: q.q,
+        idealAnswer: q.a,
+        studentAnswer: userAnswer,
+        correct: apiResult.correct,
+        feedback: apiResult.feedback,
+        keyPoints: apiResult.key_points
+      };
+      el.followUpBox.style.display = "block";
     } catch (error) {
       el.feedbackBox.className = "feedback-box wrong";
       el.feedbackBox.innerHTML = `✘ ${escapeHtml(error.message)}<div class="answer-reveal">Unable to grade this answer right now.</div>`;
@@ -392,6 +470,7 @@ function showScore() {
 el.submitBtn.addEventListener("click", submitAnswer);
 el.nextBtn.addEventListener("click", nextQuestion);
 el.restartBtn.addEventListener("click", startQuiz);
+el.followUpBtn.addEventListener("click", askFollowUp);
 el.localModeBtn.addEventListener("click", () => {
   gradingMode = "local";
   updateModeButtons();
@@ -406,6 +485,11 @@ document.addEventListener("keydown", event => {
     event.preventDefault();
     if (!answered) submitAnswer();
     else if (el.nextBtn.style.display !== "none") nextQuestion();
+  }
+
+  if (event.target.id === "followUpInput" && event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    askFollowUp();
   }
 });
 
