@@ -1,6 +1,10 @@
 const CEREBRAS_API_KEY = "csk-jwxjh3j8h6pfkrx8vcm39ejcfmx24t29nd4h56wf8hf689r8";
 const CEREBRAS_API_URL = "https://api.cerebras.ai/v1/chat/completions";
-const CEREBRAS_MODEL = "llama3.1-8b";
+const DEFAULT_CEREBRAS_MODEL = "llama3.1-8b";
+const AVAILABLE_CEREBRAS_MODELS = [
+  "llama3.1-8b",
+  "qwen-3-235b-a22b-instruct-2507"
+];
 
 const ALL_QUESTIONS = [
   { cat: "Vocabulary", q: "Define: blockade", a: "Preventing goods or people from entering or leaving an area, especially by sea." },
@@ -48,11 +52,14 @@ let current = 0;
 let score = 0;
 let answered = false;
 let gradingMode = "local";
+let selectedCerebrasModel = DEFAULT_CEREBRAS_MODEL;
 let lastAiContext = null;
 
 const el = {
   localModeBtn: document.getElementById("localModeBtn"),
   cerebrasModeBtn: document.getElementById("cerebrasModeBtn"),
+  modelSelect: document.getElementById("modelSelect"),
+  modelNote: document.getElementById("modelNote"),
   categoryTag: document.getElementById("categoryTag"),
   qNum: document.getElementById("qNum"),
   questionText: document.getElementById("questionText"),
@@ -202,7 +209,7 @@ function escapeHtml(value) {
 
 async function fetchCerebras(messages, { temperature = 0.2, responseFormat } = {}) {
   const body = {
-    model: CEREBRAS_MODEL,
+    model: selectedCerebrasModel,
     temperature,
     messages
   };
@@ -356,6 +363,18 @@ function renderGrading(apiHtml) {
 function updateModeButtons() {
   el.localModeBtn.classList.toggle("active", gradingMode === "local");
   el.cerebrasModeBtn.classList.toggle("active", gradingMode === "cerebras");
+  if (!el.modelSelect || !el.modelNote) return;
+  el.modelSelect.disabled = gradingMode !== "cerebras";
+  el.modelNote.textContent = gradingMode === "cerebras"
+    ? `AI grading is using ${selectedCerebrasModel}.`
+    : "Switch to AI Grading to choose which model uses the saved API key.";
+}
+
+function updateSelectedModel(model) {
+  if (!AVAILABLE_CEREBRAS_MODELS.includes(model)) return;
+  selectedCerebrasModel = model;
+  if (el.modelSelect) el.modelSelect.value = model;
+  updateModeButtons();
 }
 
 function startQuiz() {
@@ -479,6 +498,11 @@ el.cerebrasModeBtn.addEventListener("click", () => {
   gradingMode = "cerebras";
   updateModeButtons();
 });
+if (el.modelSelect) {
+  el.modelSelect.addEventListener("change", event => {
+    updateSelectedModel(event.target.value);
+  });
+}
 
 document.addEventListener("keydown", event => {
   if (event.target.id === "answerInput" && event.key === "Enter" && !event.shiftKey) {
@@ -494,4 +518,5 @@ document.addEventListener("keydown", event => {
 });
 
 startQuiz();
+updateSelectedModel(DEFAULT_CEREBRAS_MODEL);
 updateModeButtons();

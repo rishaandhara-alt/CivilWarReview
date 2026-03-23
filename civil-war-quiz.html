@@ -83,12 +83,19 @@
       padding: 1rem 1.1rem;
       margin-bottom: 1rem;
     }
-    .mode-row {
-      margin-top: 0.85rem;
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
+.mode-row {
+  margin-top: 0.85rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.model-row {
+  margin-top: 0.85rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
     .mode-btn {
       background: transparent;
       color: var(--gold);
@@ -106,11 +113,40 @@
       font-size: 1rem;
       margin-bottom: 0.35rem;
     }
-    .settings-copy {
-      color: var(--muted);
-      font-size: 0.8rem;
-      line-height: 1.5;
-    }
+.settings-copy {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.model-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+}
+.model-select {
+  min-width: 260px;
+  background: rgba(0,0,0,0.35);
+  color: var(--parchment);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 0.6rem 0.8rem;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.85rem;
+  outline: none;
+}
+.model-select:focus {
+  border-color: var(--gold);
+}
+.model-select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.model-note {
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
     .quiz-card {
       padding: 2rem;
       position: relative;
@@ -425,10 +461,18 @@
     <div class="settings-copy">
       Choose whether answers should be graded locally or with Cerebras.
     </div>
-    <div class="mode-row">
-      <button id="localModeBtn" class="mode-btn active" type="button">Local Mode</button>
-      <button id="cerebrasModeBtn" class="mode-btn" type="button">AI Grading</button>
-    </div>
+<div class="mode-row">
+  <button id="localModeBtn" class="mode-btn active" type="button">Local Mode</button>
+  <button id="cerebrasModeBtn" class="mode-btn" type="button">AI Grading</button>
+</div>
+<div class="model-row">
+  <label class="model-label" for="modelSelect">AI Model</label>
+  <select id="modelSelect" class="model-select" disabled>
+    <option value="llama3.1-8b">llama3.1-8b</option>
+    <option value="qwen-3-235b-a22b-instruct-2507">qwen-3-235b-a22b-instruct-2507</option>
+  </select>
+  <div class="model-note" id="modelNote">Switch to AI Grading to choose which model uses the saved API key.</div>
+</div>
   </section>
 
   <div class="quiz-card" id="quizCard">
